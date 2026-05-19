@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Билет + Präpositionen</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* Flexbox für Responsivität */
+        .drop-zones {
+            display: flex;
+            gap: 20px;
+            flex-direction: row;
+            margin-bottom: 30px;
+        }
+
+        .zone {
+            flex: 1;
+            background: #edf2f7;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .zone.drag-over {
+            background: #e2e8f0;
+            border-color: var(--primary-color);
+        }
+
+        .zone h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            width: fit-content;
+        }
+
+        /* Element-Pool */
+        .items-pool {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        /* Die ziehbaren Kärtchen */
+        .draggable {
+            background: var(--card-bg);
+            border: 1px solid #cbd5e0;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: grab;
+            user-select: none;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        .draggable.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        /* Buttons & Ergebnis */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #checkBtn {
+            background-color: var(--primary-color);
+        }
+
+        #checkBtn:hover {
+            background-color: #357abd;
+        }
+
+        #resetBtn {
+            background-color: var(--reset-color);
+        }
+
+        #resetBtn:hover {
+            background-color: #7f8c8d;
+        }
+
+        #result {
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* Visuelle Rückmeldung */
+        .correct { border: 2px solid var(--success-color) !important; background-color: #e8f8f5 !important; }
+        .incorrect { border: 2px solid var(--error-color) !important; background-color: #fdeaea !important; }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            .drop-zones {
+                flex-direction: column;
+            }
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .zone {
+                min-height: 150px;
+            }
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            button {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Куда билет? (Wohin das Ticket?)</h1>
+    <p class="instruction">Ziehe die russischen Wörter in den richtigen Korb mit der passenden Präposition <b>на</b> oder <b>в</b>.</p>
+
+    <!-- Die Körbe -->
+    <div class="drop-zones">
+        <div class="zone" data-target="на">
+            <h2>на</h2>
+        </div>
+        <div class="zone" data-target="в">
+            <h2>в</h2>
+        </div>
+    </div>
+
+    <!-- Der Pool an Wörtern -->
+    <div class="items-pool" id="pool">
+        <div class="draggable" draggable="true" data-correct="на">поезд</div>
+        <div class="draggable" draggable="true" data-correct="на">самолет</div>
+        <div class="draggable" draggable="true" data-correct="на">электричку</div>
+        <div class="draggable" draggable="true" data-correct="на">лекцию</div>
+        <div class="draggable" draggable="true" data-correct="на">концерт</div>
+        <div class="draggable" draggable="true" data-correct="на">балет</div>
+        <div class="draggable" draggable="true" data-correct="в">театр</div>
+        <div class="draggable" draggable="true" data-correct="в">кино</div>
+        <div class="draggable" draggable="true" data-correct="в">музей</div>
+    </div>
+
+    <div class="controls">
+        <div class="button-group">
+            <button id="checkBtn">Überprüfen</button>
+            <button id="resetBtn">Neustart</button>
+        </div>
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    const draggables = document.querySelectorAll('.draggable');
+    const zones = document.querySelectorAll('.zone');
+    const pool = document.getElementById('pool');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultDiv = document.getElementById('result');
+
+    // Funktion zum Mischen der Kärtchen im Pool
+    function shufflePool() {
+        const items = Array.from(pool.children);
+        items.sort(() => Math.random() - 0.5);
+        items.forEach(item => pool.appendChild(item));
+    }
+
+    // Beim ersten Laden mischen
+    window.addEventListener('DOMContentLoaded', shufflePool);
+
+    // Drag-and-Drop Logik
+    draggables.forEach(draggable => {
+        draggable.addEventListener('dragstart', () => {
+            draggable.classList.add('dragging');
+            draggable.classList.remove('correct', 'incorrect');
+        });
+
+        draggable.addEventListener('dragend', () => {
+            draggable.classList.remove('dragging');
+        });
+    });
+
+    zones.forEach(zone => {
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', () => {
+            zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over');
+            const draggingItem = document.querySelector('.dragging');
+            if (draggingItem) {
+                zone.appendChild(draggingItem);
+            }
+        });
+    });
+
+    pool.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+    pool.addEventListener('drop', () => {
+        const draggingItem = document.querySelector('.dragging');
+        if (draggingItem) {
+            pool.appendChild(draggingItem);
+            draggingItem.classList.remove('correct', 'incorrect');
+        }
+    });
+
+    // Überprüfungs-Funktion
+    checkBtn.addEventListener('click', () => {
+        let allCorrect = true;
+        let totalItemsPlaced = 0;
+        const totalItemsCount = draggables.length;
+
+        zones.forEach(zone => {
+            const expectedCategory = zone.getAttribute('data-target');
+            const itemsInZone = zone.querySelectorAll('.draggable');
+
+            itemsInZone.forEach(item => {
+                totalItemsPlaced++;
+                const itemCorrectCategory = item.getAttribute('data-correct');
+
+                if (itemCorrectCategory === expectedCategory) {
+                    item.classList.remove('incorrect');
+                    item.classList.add('correct');
+                } else {
+                    item.classList.remove('correct');
+                    item.classList.add('incorrect');
+                    allCorrect = false;
+                }
+            });
+        });
+
+        if (totalItemsPlaced < totalItemsCount) {
+            resultDiv.style.color = "var(--text-color)";
+            resultDiv.textContent = "Bitte ordne zuerst alle Wörter zu!";
+        } else if (allCorrect) {
+            resultDiv.style.color = "var(--success-color)";
+            resultDiv.textContent = "Super! Alles richtig zugeordnet! 🎉";
+        } else {
+            resultDiv.style.color = "var(--error-color)";
+            resultDiv.textContent = "Einige Zuordnungen sind noch falsch. Korrigiere sie!";
+        }
+    });
+
+    // Neustart-Funktion
+    resetBtn.addEventListener('click', () => {
+        // Alle Kärtchen zurück in den Pool verschieben
+        draggables.forEach(item => {
+            item.classList.remove('correct', 'incorrect');
+            pool.appendChild(item);
+        });
+        
+        // Pool neu mischen
+        shufflePool();
+        
+        // Text-Feedback zurücksetzen
+        resultDiv.textContent = "";
+    });
+</script>
+
+</body>
+</html>
