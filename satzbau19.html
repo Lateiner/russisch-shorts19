@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Satzbau-Baukasten mit Sofort-Feedback</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        .translation-hint {
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            min-height: 26px;
+        }
+
+        /* Arbeitsbereiche */
+        .box-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #95a5a6;
+            margin-bottom: 8px;
+        }
+
+        .workspace {
+            background: #edf2f7;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 70px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 25px;
+            transition: all 0.2s;
+        }
+
+        .workspace.correct-sentence {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+        }
+
+        /* Die Wort-Bausteine */
+        .word-token {
+            background: var(--card-bg);
+            border: 2px solid #cbd5e0;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        @media (hover: hover) {
+            .word-token:not(.placed):hover {
+                border-color: var(--primary-color);
+                transform: translateY(-2px);
+            }
+        }
+
+        /* Zustand bei korrekt platzierten Wörtern im Zielbereich */
+        .word-token.placed {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+            color: #117a65;
+            cursor: default;
+        }
+
+        /* Fehler-Animation direkt am Baustein */
+        .word-token.wrong-click {
+            border-color: var(--error-color);
+            background-color: #fdeaea;
+            color: #b03a2e;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Fortschrittsanzeige */
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #cbd5e0;
+        }
+
+        .dot.active {
+            background: var(--primary-color);
+        }
+
+        .dot.done {
+            background: var(--success-color);
+        }
+
+        /* Steuerung */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 180px;
+        }
+
+        #nextBtn {
+            background-color: var(--primary-color);
+            display: none; /* Sichtbar, wenn Satz komplett gelöst ist */
+        }
+
+        #nextBtn:hover {
+            background-color: #357abd;
+        }
+
+        #resetBtn {
+            background-color: var(--reset-color);
+        }
+
+        #resetBtn:hover {
+            background-color: #7f8c8d;
+        }
+
+        #result {
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .word-token {
+                padding: 8px 14px;
+                font-size: 1rem;
+                flex-grow: 1;
+                text-align: center;
+            }
+            .btn-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            button {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Составь предложение (Satzbau)</h1>
+    <p class="instruction">Finde das jeweils nächste passende Wort aus dem Schüttelkasten!</p>
+
+    <div class="progress-dots" id="dotsContainer"></div>
+    <div class="translation-hint" id="translationHint"></div>
+
+    <!-- Zielbereich -->
+    <div class="box-title">Твоё предложение (Dein Satz):</div>
+    <div class="workspace" id="targetWorkspace"></div>
+
+    <!-- Schüttelkasten -->
+    <div class="box-title">Schüttelkasten:</div>
+    <div class="workspace" id="sourceWorkspace"></div>
+
+    <div class="controls">
+        <div class="btn-group">
+            <button id="nextBtn">Weiter</button>
+            <button id="resetBtn">Zurücksetzen</button>
+        </div>
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    // Auf exakt 6 Sätze erweiterter Pool aus dem Lernbereich
+    const sentences = [
+        {
+            tokens: ["Я", "купил", "билет", "на", "самолет", "в", "Россию."],
+            hint: "Ich habe ein Ticket für das Flugzeug nach Russland gekauft."
+        },
+        {
+            tokens: ["Мы", "купили", "билет", "на", "электричку."],
+            hint: "Wir haben ein Ticket für die S-Bahn gekauft."
+        },
+        {
+            tokens: ["Где", "купить", "билет", "в", "музей?"],
+            hint: "Wo kann man eine Karte ins Museum kaufen?"
+        },
+        {
+            tokens: ["Завтра", "мы", "идем", "на", "концерт."],
+            hint: "Morgen gehen wir zum Konzert."
+        },
+        {
+            tokens: ["Они", "едут", "в", "театр", "на", "метро."],
+            hint: "Sie fahren mit der U-Bahn ins Theater."
+        },
+        {
+            tokens: ["Студенты", "сейчас", "на", "лекции", "в", "университете."],
+            hint: "Die Studenten sind gerade bei der Vorlesung in der Universität."
+        }
+    ];
+
+    let currentSentenceIndex = 0;
+    let currentWordIndex = 0; // Verfolgt, das wievielte Wort des Satzes gerade gesucht wird
+
+    const sourceWorkspace = document.getElementById('sourceWorkspace');
+    const targetWorkspace = document.getElementById('targetWorkspace');
+    const translationHint = document.getElementById('translationHint');
+    const dotsContainer = document.getElementById('dotsContainer');
+    const nextBtn = document.getElementById('nextBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultDiv = document.getElementById('result');
+
+    function initDots() {
+        dotsContainer.innerHTML = '';
+        sentences.forEach((_, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            if (index === currentSentenceIndex) dot.classList.add('active');
+            dotsContainer.appendChild(dot);
+        });
+    }
+
+    function updateDots() {
+        const dots = dotsContainer.children;
+        Array.from(dots).forEach((dot, index) => {
+            dot.className = 'dot';
+            if (index < currentSentenceIndex) dot.classList.add('done');
+            if (index === currentSentenceIndex) dot.classList.add('active');
+        });
+    }
+
+    function loadSentence() {
+        currentWordIndex = 0;
+        targetWorkspace.innerHTML = '';
+        targetWorkspace.className = 'workspace';
+        resultDiv.textContent = '';
+        nextBtn.style.display = 'none';
+
+        const currentData = sentences[currentSentenceIndex];
+        translationHint.textContent = currentData.hint;
+
+        // Kopie erstellen und chaotisch mischen
+        const shuffledTokens = [...currentData.tokens].sort(() => Math.random() - 0.5);
+
+        sourceWorkspace.innerHTML = '';
+        shuffledTokens.forEach(word => {
+            const tokenEl = document.createElement('div');
+            tokenEl.className = 'word-token';
+            tokenEl.textContent = word;
+            
+            tokenEl.addEventListener('click', () => handleTokenClick(tokenEl, word));
+            sourceWorkspace.appendChild(tokenEl);
+        });
+
+        updateDots();
+    }
+
+    // Direktes Feedback beim Klick
+    function handleTokenClick(tokenEl, clickedWord) {
+        // Ignorieren, wenn das Wort bereits richtig zugeordnet wurde
+        if (tokenEl.classList.contains('placed')) return;
+
+        const targetSentence = sentences[currentSentenceIndex].tokens;
+        const expectedWord = targetSentence[currentWordIndex];
+
+        if (clickedWord === expectedWord) {
+            // DIREKTES POSITIVES FEEDBACK
+            tokenEl.classList.remove('wrong-click');
+            tokenEl.classList.add('placed');
+            
+            // Klon im Zielbereich einfügen, um die Reihenfolge im Schüttelkasten nicht optisch zu zerreißen
+            const placedClone = tokenEl.cloneNode(true);
+            targetWorkspace.appendChild(placedClone);
+            
+            // Aus dem Schüttelkasten unsichtbar machen/entfernen
+            tokenEl.style.display = 'none';
+
+            currentWordIndex++;
+
+            // Prüfen, ob der Satz vollständig ist
+            if (currentWordIndex === targetSentence.length) {
+                targetWorkspace.classList.add('correct-sentence');
+                resultDiv.style.color = "var(--success-color)";
+                resultDiv.textContent = "Perfekt zusammengebaut! 👍";
+                nextBtn.style.display = 'block';
+            }
+        } else {
+            // DIREKTES NEGATIVES FEEDBACK (Blinkt rot am gedrückten Baustein)
+            tokenEl.classList.remove('wrong-click');
+            void tokenEl.offsetWidth; // Trigger Reflow für die erneute Animation
+            tokenEl.classList.add('wrong-click');
+            
+            resultDiv.style.color = "var(--error-color)";
+            resultDiv.textContent = `Nein, "${clickedWord}" ist an dieser Stelle nicht richtig.`;
+        }
+    }
+
+    resetBtn.addEventListener('click', () => {
+        loadSentence();
+    });
+
+    nextBtn.addEventListener('click', () => {
+        currentSentenceIndex++;
+        if (currentSentenceIndex < sentences.length) {
+            loadSentence();
+        } else {
+            // Alles geschafft!
+            sourceWorkspace.innerHTML = '';
+            translationHint.textContent = '';
+            targetWorkspace.innerHTML = '';
+            targetWorkspace.className = 'workspace correct-sentence';
+            updateDots();
+            resultDiv.style.color = "var(--success-color)";
+            resultDiv.innerHTML = "<h2>Großartige Leistung!</h2>Du hast alle 6 Sätze fehlerfrei gemeistert! 🏆";
+            nextBtn.style.display = 'none';
+            resetBtn.textContent = "Erneut starten";
+            
+            resetBtn.onclick = () => {
+                currentSentenceIndex = 0;
+                resetBtn.textContent = "Zurücksetzen";
+                // Page-Reload-Alternative, um den Event-Handler sauber zurückzusetzen
+                initDots();
+                loadSentence();
+            };
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initDots();
+        loadSentence();
+    });
+</script>
+
+</body>
+</html>
