@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Digitales Kreuzworträtsel</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --solution-color: #f1c40f;
+            --cell-size: 38px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 750px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+
+        /* Das Rätsel-Grid: 11 Spalten verhindern jeden Umbruch */
+        .crossword-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(11, var(--cell-size));
+            grid-template-rows: repeat(5, var(--cell-size));
+            gap: 4px;
+            background: #cbd5e0;
+            padding: 6px;
+            border-radius: 8px;
+        }
+
+        /* Einzelne Zelle */
+        .cell {
+            background: #f8fafc;
+            border: 1px solid #94a3b8;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cell.empty {
+            background: transparent;
+            border: none;
+        }
+
+        /* Eingabefeld in der Zelle */
+        .cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-color);
+            outline: none;
+        }
+
+        /* Lösungswort-Zellen (Gelb) */
+        .cell.solution-cell {
+            background: #fef9c3;
+            border: 2px solid var(--solution-color);
+        }
+
+        /* Kleine Nummern im Kästchen */
+        .cell-num {
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        /* Hinweis-Nummer des Lösungsworts */
+        .solution-num {
+            position: absolute;
+            bottom: 1px;
+            right: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #b45309;
+            pointer-events: none;
+        }
+
+        /* Lösungswort-Anzeige unten */
+        .solution-box {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .solution-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .solution-display {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .sol-letter {
+            width: 36px;
+            height: 36px;
+            background: #fef9c3;
+            border: 2px solid var(--solution-color);
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #b45309;
+        }
+
+        /* Hinweise */
+        .clues-section {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .clues-section h3 {
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+
+        .clue-item {
+            margin-bottom: 12px;
+            font-size: 1rem;
+            line-height: 1.5;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .clue-item:hover {
+            background: #e2e8f0;
+        }
+
+        .clue-number {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-right: 5px;
+        }
+
+        /* Steuerung & Feedback */
+        .feedback {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 26px;
+            margin-top: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        .check-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .check-btn:hover {
+            background-color: #357abd;
+        }
+
+        .reset-btn {
+            background-color: var(--reset-color);
+            color: white;
+        }
+
+        .reset-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Responsive Anpassung für Smartphones / Tablets */
+        @media (max-width: 540px) {
+            :root {
+                --cell-size: 28px;
+            }
+            .cell input {
+                font-size: 0.95rem;
+            }
+            .sol-letter {
+                width: 30px;
+                height: 30px;
+                font-size: 1rem;
+            }
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Кроссворд (Kreuzworträtsel)</h1>
+    <p class="instruction">Trage die deutschen Übersetzungen ein. Die gelben Felder ergeben das gesuchte Lösungswort!</p>
+
+    <div class="crossword-wrapper">
+        <div class="grid" id="crosswordGrid">
+            <div class="cell empty"></div><div class="cell empty"></div>
+            <div class="cell"><span class="cell-num">1</span><input type="text" maxlength="1" data-word="1" data-index="0" id="w-1-0"></div>
+            <div class="cell solution-cell"><span class="solution-num">①</span><input type="text" maxlength="1" data-word="1" data-index="1" data-sol="0" id="w-1-1"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="1" data-index="2" id="w-1-2"></div>
+            <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+
+            <div class="cell empty"></div>
+            <div class="cell"><span class="cell-num">2</span><input type="text" maxlength="1" data-word="2" data-index="0" id="w-2-0"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="2" data-index="1" id="w-2-1"></div>
+            <div class="cell solution-cell"><span class="solution-num">②</span><input type="text" maxlength="1" data-word="2" data-index="2" data-sol="1" id="w-2-2"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="2" data-index="3" id="w-2-3"></div>
+            <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+
+            <div class="cell empty"></div>
+            <div class="cell"><span class="cell-num">3</span><input type="text" maxlength="1" data-word="3" data-index="0" id="w-3-0"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="3" data-index="1" id="w-3-1"></div>
+            <div class="cell solution-cell"><span class="solution-num">③</span><input type="text" maxlength="1" data-word="3" data-index="2" data-sol="2" id="w-3-2"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="3" data-index="3" id="w-3-3"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="3" data-index="4" id="w-3-4"></div>
+            <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+
+            <div class="cell"><span class="cell-num">4</span><input type="text" maxlength="1" data-word="4" data-index="0" id="w-4-0"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="4" data-index="1" id="w-4-1"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="4" data-index="2" id="w-4-2"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="4" data-index="3" id="w-4-3"></div>
+            <div class="cell solution-cell"><span class="solution-num">④</span><input type="text" maxlength="1" data-word="4" data-index="4" data-sol="3" id="w-4-4"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="4" data-index="5" id="w-4-5"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="4" data-index="6" id="w-4-6"></div>
+            <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+
+            <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+            <div class="cell"><span class="cell-num">5</span><input type="text" maxlength="1" data-word="5" data-index="0" id="w-5-0"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="5" data-index="1" id="w-5-1"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="5" data-index="2" id="w-5-2"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="5" data-index="3" id="w-5-3"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="5" data-index="4" id="w-5-4"></div>
+            <div class="cell"><input type="text" maxlength="1" data-word="5" data-index="5" id="w-5-5"></div>
+            <div class="cell solution-cell"><span class="solution-num">⑤</span><input type="text" maxlength="1" data-word="5" data-index="6" data-sol="4" id="w-5-6"></div>
+            <div class="cell empty"></div>
+        </div>
+    </div>
+
+    <div class="solution-box">
+        <div class="solution-title">Gesuchtes Lösungswort:</div>
+        <div class="solution-display">
+            <div class="sol-letter" id="s0">?</div>
+            <div class="sol-letter" id="s1">?</div>
+            <div class="sol-letter" id="s2">?</div>
+            <div class="sol-letter" id="s3">?</div>
+            <div class="sol-letter" id="s4">?</div>
+        </div>
+    </div>
+
+    <div class="clues-section">
+        <h3>Hinweise (waagerecht):</h3>
+        <div class="clue-item" onclick="focusFirstCell('1')">
+            <span class="clue-number">1.</span> Was bedeutet „поезд“ in: <em>билет на поезд</em>? (3 Buchstaben)
+        </div>
+        <div class="clue-item" onclick="focusFirstCell('2')">
+            <span class="clue-number">2.</span> Wohin geht man bei: <em>идти в кино</em>? (4 Buchstaben)
+        </div>
+        <div class="clue-item" onclick="focusFirstCell('3')">
+            <span class="clue-number">3.</span> Welches Transportmittel ist gemeint? <em>ехать на метро</em> (5 Buchstaben)
+        </div>
+        <div class="clue-item" onclick="focusFirstCell('4')">
+            <span class="clue-number">4.</span> Was für ein Event besucht man bei: <em>идти на концерт</em>? (7 Buchstaben)
+        </div>
+        <div class="clue-item" onclick="focusFirstCell('5')">
+            <span class="clue-number">5.</span> Kulturelles Gebäude: Gegenpart zu „кино“ in: <em>билет в театр</em> (7 Buchstaben)
+        </div>
+    </div>
+
+    <div class="feedback" id="feedbackZone"></div>
+
+    <div class="controls">
+        <button class="btn check-btn" id="checkBtn">Rätsel prüfen</button>
+        <button class="btn reset-btn" id="resetBtn">Neustart</button>
+    </div>
+</div>
+
+<script>
+    const solutions = {
+        "1": "ZUG",
+        "2": "KINO",   
+        "3": "METRO",
+        "4": "KONZERT", 
+        "5": "THEATER"  
+    };
+
+    const inputs = document.querySelectorAll('.grid input');
+    const feedbackZone = document.getElementById('feedbackZone');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    inputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+            const val = e.target.value.toUpperCase();
+            // Verhindert kyrillische Eingaben komplett
+            e.target.value = val.replace(/[^A-ZÄÖÜß]/g, '');
+
+            // Live-Übertragung in den Lösungsbalken unten
+            if (e.target.hasAttribute('data-sol')) {
+                const solIndex = e.target.getAttribute('data-sol');
+                document.getElementById(`s${solIndex}`).textContent = e.target.value || "?";
+            }
+
+            // Automatischer Fokus vorwärts
+            if (e.target.value.length === 1) {
+                const currentWord = e.target.getAttribute('data-word');
+                const currentIndex = parseInt(e.target.getAttribute('data-index'));
+                const nextInput = document.getElementById(`w-${currentWord}-${currentIndex + 1}`);
+                if (nextInput) {
+                    nextInput.focus();
+                }
+            }
+        });
+
+        // Backspace: Automatischer Fokus rückwärts
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && e.target.value === '') {
+                const currentWord = e.target.getAttribute('data-word');
+                const currentIndex = parseInt(e.target.getAttribute('data-index'));
+                const prevInput = document.getElementById(`w-${currentWord}-${currentIndex - 1}`);
+                if (prevInput) {
+                    prevInput.focus();
+                }
+            }
+        });
+    });
+
+    function focusFirstCell(wordNum) {
+        const firstCell = document.getElementById(`w-${wordNum}-0`);
+        if (firstCell) firstCell.focus();
+    }
+
+    // Funktion: Rätsel prüfen
+    checkBtn.addEventListener('click', () => {
+        let allCorrect = true;
+
+        for (let w = 1; w <= 5; w++) {
+            const wordInputs = document.querySelectorAll(`input[data-word="${w}"]`);
+            let userWord = "";
+            
+            wordInputs.forEach(inp => {
+                userWord += inp.value.trim().toUpperCase();
+            });
+
+            if (userWord !== solutions[w]) {
+                allCorrect = false;
+                wordInputs.forEach(inp => inp.style.color = 'var(--error-color)');
+            } else {
+                wordInputs.forEach(inp => inp.style.color = 'var(--success-color)');
+            }
+        }
+
+        if (allCorrect) {
+            feedbackZone.style.color = 'var(--success-color)';
+            feedbackZone.textContent = 'Grandios! Das gesamte Rätsel ist korrekt und das Lösungswort lautet UNTER! 🏆';
+        } else {
+            feedbackZone.style.color = 'var(--error-color)';
+            feedbackZone.textContent = 'Einige Felder sind noch nicht korrekt. Überprüfe die rot markierten Buchstaben!';
+            
+            setTimeout(() => {
+                inputs.forEach(inp => {
+                    if(inp.style.color === 'var(--error-color)') {
+                        inp.style.color = 'var(--text-color)';
+                    }
+                });
+            }, 3000);
+        }
+    });
+
+    // Funktion: Neustart
+    resetBtn.addEventListener('click', () => {
+        inputs.forEach(inp => {
+            inp.value = '';
+            inp.style.color = 'var(--text-color)';
+        });
+
+        for (let i = 0; i < 5; i++) {
+            document.getElementById(`s${i}`).textContent = '?';
+        }
+
+        feedbackZone.textContent = '';
+    });
+</script>
+
+</body>
+</html>
