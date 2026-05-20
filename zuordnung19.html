@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Zuordnungs-Match</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --selected-color: #f1c40f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 750px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* Flexbox-Grid: Desktop 2 Spalten */
+        .match-grid {
+            display: flex;
+            gap: 40px;
+            flex-direction: row;
+            margin-bottom: 30px;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .column-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        /* Die interaktiven Kacheln */
+        .tile {
+            background: #f8fafc;
+            border: 2px solid #cbd5e0;
+            padding: 14px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            opacity: 1;
+            visibility: visible;
+            /* Übergangseffekt für das langsame Verschwinden (1.2 Sekunden) */
+            transition: border-color 0.2s, background-color 0.2s, color 0.2s, opacity 1.2s ease, visibility 1.2s;
+        }
+
+        @media (hover: hover) {
+            .tile:not(.matched):not(.selected):hover {
+                border-color: var(--primary-color);
+                background-color: #edf2f7;
+            }
+        }
+
+        /* Zustände */
+        .tile.selected {
+            border-color: var(--selected-color);
+            background-color: #fef9e7;
+            transform: scale(1.02);
+        }
+
+        /* Gefundene Paare werden grün und verschwinden dann langsam */
+        .tile.matched {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+            color: #117a65;
+            cursor: default;
+            box-shadow: none;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .tile.wrong {
+            border-color: var(--error-color);
+            background-color: #fdeaea;
+            color: #b03a2e;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: var(--reset-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        button:hover {
+            background-color: #7f8c8d;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #result {
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* Mobile Ansicht */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .match-grid {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .column {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .column-title {
+                grid-column: span 2;
+                margin-bottom: 0;
+            }
+            .tile {
+                padding: 12px 10px;
+                font-size: 1rem;
+            }
+            button {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Найди пару (Finde das Paar)</h1>
+    <p class="instruction">Klicke zuerst ein Wort an und danach die passende Präposition. Richtige Paare lösen sich langsam auf!</p>
+
+    <div class="match-grid">
+        <!-- Nomen (4x für "на", 2x für "в") -->
+        <div class="column" id="wordsColumn">
+            <div class="column-title">Существительное (Nomen)</div>
+            <div class="tile" data-type="word" data-pair="на">поезд</div>
+            <div class="tile" data-type="word" data-pair="на">самолет</div>
+            <div class="tile" data-type="word" data-pair="на">лекцию</div>
+            <div class="tile" data-type="word" data-pair="на">концерт</div>
+            <div class="tile" data-type="word" data-pair="в">театр</div>
+            <div class="tile" data-type="word" data-pair="в">кино</div>
+        </div>
+
+        <!-- Präpositionen (Jetzt korrigiert: Genau 4x "на" und 2x "в") -->
+        <div class="column" id="prepColumn">
+            <div class="column-title">Предлог (Präposition)</div>
+            <div class="tile" data-type="prep" data-value="на">на</div>
+            <div class="tile" data-type="prep" data-value="на">на</div>
+            <div class="tile" data-type="prep" data-value="на">на</div>
+            <div class="tile" data-type="prep" data-value="на">на</div>
+            <div class="tile" data-type="prep" data-value="в">в</div>
+            <div class="tile" data-type="prep" data-value="в">в</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="resetBtn">Neustart</button>
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    const wordsColumn = document.getElementById('wordsColumn');
+    const prepColumn = document.getElementById('prepColumn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultDiv = document.getElementById('result');
+
+    let selectedWord = null;
+    let selectedPrep = null;
+    let matchCount = 0;
+    const totalMatches = document.querySelectorAll('.tile[data-type="word"]').length;
+
+    function shuffleColumns() {
+        const words = Array.from(wordsColumn.children).filter(el => el.classList.contains('tile'));
+        words.sort(() => Math.random() - 0.5);
+        words.forEach(el => wordsColumn.appendChild(el));
+
+        const preps = Array.from(prepColumn.children).filter(el => el.classList.contains('tile'));
+        preps.sort(() => Math.random() - 0.5);
+        preps.forEach(el => prepColumn.appendChild(el));
+    }
+
+    document.addEventListener('click', (e) => {
+        const tile = e.target;
+        if (!tile.classList.contains('tile') || tile.classList.contains('matched') || tile.classList.contains('wrong')) return;
+
+        const type = tile.getAttribute('data-type');
+
+        if (type === 'word') {
+            if (selectedWord) selectedWord.classList.remove('selected');
+            selectedWord = tile;
+            selectedWord.classList.add('selected');
+        } else if (type === 'prep') {
+            if (selectedPrep) selectedPrep.classList.remove('selected');
+            selectedPrep = tile;
+            selectedPrep.classList.add('selected');
+        }
+
+        if (selectedWord && selectedPrep) {
+            checkMatch(selectedWord, selectedPrep);
+        }
+    });
+
+    function checkMatch(wordTile, prepTile) {
+        const expectedPrep = wordTile.getAttribute('data-pair');
+        const chosenPrep = prepTile.getAttribute('data-value');
+
+        if (expectedPrep === chosenPrep) {
+            // Erst Selektion weg, dann Match-Klasse aktivieren (löst CSS transition aus)
+            wordTile.classList.remove('selected');
+            prepTile.classList.remove('selected');
+            wordTile.classList.add('matched');
+            prepTile.classList.add('matched');
+            
+            matchCount++;
+            
+            if (matchCount === totalMatches) {
+                // Warte kurz, bis das letzte Paar unsichtbar wird, bevor die Gratulation kommt
+                setTimeout(() => {
+                    resultDiv.style.color = "var(--success-color)";
+                    resultDiv.textContent = "Großartig! Du hast alle Paare richtig verbunden! 🏆";
+                }, 600);
+            }
+        } else {
+            wordTile.classList.remove('selected');
+            prepTile.classList.remove('selected');
+            wordTile.classList.add('wrong');
+            prepTile.classList.add('wrong');
+
+            setTimeout(() => {
+                wordTile.classList.remove('wrong');
+                prepTile.classList.remove('wrong');
+            }, 300);
+        }
+
+        selectedWord = null;
+        selectedPrep = null;
+    }
+
+    resetBtn.addEventListener('click', () => {
+        document.querySelectorAll('.tile').forEach(tile => {
+            tile.classList.remove('selected', 'matched', 'wrong');
+        });
+        selectedWord = null;
+        selectedPrep = null;
+        matchCount = 0;
+        resultDiv.textContent = "";
+        
+        // Das Mischen leicht verzögern, damit der Reset sauber aussieht falls noch Animationen liefen
+        setTimeout(shuffleColumns, 50);
+    });
+
+    window.addEventListener('DOMContentLoaded', shuffleColumns);
+</script>
+
+</body>
+</html>
