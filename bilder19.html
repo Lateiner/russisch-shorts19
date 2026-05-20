@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Bild-Matching</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --selected-prep: #34495e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* Schalter für die Präpositionen (Werkzeugleiste) */
+        .prep-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .prep-btn {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 15px 40px;
+            border: 3px solid #cbd5e0;
+            border-radius: 10px;
+            background: #edf2f7;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 120px;
+            text-align: center;
+        }
+
+        .prep-btn.active {
+            background-color: var(--selected-prep);
+            color: white;
+            border-color: var(--selected-prep);
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* Bild-Raster für Desktop & Tablet */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* Die Bildkarten */
+        .image-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        @media (hover: hover) {
+            .image-card:not(.solved):hover {
+                transform: translateY(-3px);
+                border-color: var(--primary-color);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+        }
+
+        .image-icon {
+            font-size: 3.5rem;
+        }
+
+        .image-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-color);
+        }
+
+        /* Visuelle Zustände bei Rückmeldung */
+        .image-card.correct-match {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+            pointer-events: none; /* Deaktiviert weiteres Klicken */
+        }
+
+        .image-card.correct-match .image-label {
+            color: #117a65;
+        }
+
+        .image-card.incorrect-match {
+            border-color: var(--error-color);
+            background-color: #fdeaea;
+            animation: shake 0.3s ease;
+        }
+
+        .image-card.incorrect-match .image-label {
+            color: #b03a2e;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Kontrollbereich */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .reset-btn {
+            background-color: var(--reset-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .reset-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        #result {
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* RESPONSIVE DESIGN: Optimierung für kleinere Bildschirme */
+        @media (max-width: 768px) {
+            .image-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 Spalten auf Tablets */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .prep-btn {
+                font-size: 1.2rem;
+                padding: 10px 25px;
+                width: 100px;
+            }
+            .image-grid {
+                grid-template-columns: 1fr; /* Volle Breite auf Smartphones */
+                gap: 15px;
+            }
+            .image-card {
+                flex-direction: row; /* Horizontale Ausrichtung für kompakten Daumen-Klick */
+                justify-content: flex-start;
+                padding: 15px 25px;
+                gap: 25px;
+            }
+            .image-icon {
+                font-size: 2.5rem;
+            }
+            .reset-btn {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Картинки и предлоги (Bilder und Präpositionen)</h1>
+    <p class="instruction">Wähle oben eine Präposition aus und klicke dann auf alle dazu passenden Bilder!</p>
+
+    <!-- Präpositions-Schalter -->
+    <div class="prep-selector">
+        <button class="prep-btn active" data-prep="на">на</button>
+        <button class="prep-btn" data-prep="в">в</button>
+    </div>
+
+    <!-- Bild-Raster -->
+    <div class="image-grid" id="grid">
+        <!-- 6 Beispielkarten aus der Anleitung -->
+        <div class="image-card" data-answer="на">
+            <div class="image-icon">🚂</div>
+            <div class="image-label">поезд</div>
+        </div>
+        <div class="image-card" data-answer="на">
+            <div class="image-icon">✈️</div>
+            <div class="image-label">самолет</div>
+        </div>
+        <div class="image-card" data-answer="в">
+            <div class="image-icon">🎭</div>
+            <div class="image-label">театр</div>
+        </div>
+        <div class="image-card" data-answer="на">
+            <div class="image-icon">🎸</div>
+            <div class="image-label">концерт</div>
+        </div>
+        <div class="image-card" data-answer="в">
+            <div class="image-icon">🎬</div>
+            <div class="image-label">кино</div>
+        </div>
+        <div class="image-card" data-answer="в">
+            <div class="image-icon">🏛️</div>
+            <div class="image-label">музей</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="reset-btn" id="resetBtn">Neustart</button>
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    const prepButtons = document.querySelectorAll('.prep-btn');
+    const imageCards = document.querySelectorAll('.image-card');
+    const grid = document.getElementById('grid');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultDiv = document.getElementById('result');
+
+    let currentSelectedPrep = 'на';
+    let solvedCount = 0;
+    const totalCards = imageCards.length;
+
+    // Grid beim Start zufällig durchmischen
+    function shuffleGrid() {
+        const cardsArray = Array.from(grid.children);
+        cardsArray.sort(() => Math.random() - 0.5);
+        cardsArray.forEach(card => grid.appendChild(card));
+    }
+
+    // Umschalten der aktiven Präposition (на / в)
+    prepButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            prepButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentSelectedPrep = btn.getAttribute('data-prep');
+            
+            // Vorherige Fehler-Animationen beim Umschalten kurz aufräumen
+            imageCards.forEach(card => card.classList.remove('incorrect-match'));
+        });
+    });
+
+    // Interaktion mit den Bildkarten
+    imageCards.forEach(card => {
+        card.addEventListener('click', () => {
+            // Wenn die Karte bereits gelöst wurde, ignoriere den Klick
+            if (card.classList.contains('correct-match')) return;
+
+            const correctAnswer = card.getAttribute('data-answer');
+
+            if (correctAnswer === currentSelectedPrep) {
+                // Richtig zugeordnet
+                card.classList.remove('incorrect-match');
+                card.classList.add('correct-match');
+                solvedCount++;
+                
+                // Prüfen, ob das gesamte Spiel gelöst wurde
+                if (solvedCount === totalCards) {
+                    resultDiv.style.color = "var(--success-color)";
+                    resultDiv.textContent = "Hervorragend! Du hast alle Bilder richtig zugeordnet! 🏆";
+                }
+            } else {
+                // Falsch zugeordnet (Blinkt rot auf)
+                card.classList.remove('incorrect-match');
+                // kleiner Trick, um die CSS-Animation bei wiederholtem Fehler neu zu triggern
+                void card.offsetWidth; 
+                card.add('incorrect-match');
+            }
+        });
+    });
+
+    // Neustart-Funktion
+    resetBtn.addEventListener('click', () => {
+        imageCards.forEach(card => {
+            card.classList.remove('correct-match', 'incorrect-match');
+        });
+        solvedCount = 0;
+        resultDiv.textContent = "";
+        
+        // Zurücksetzen auf Standard-Präposition "на"
+        prepButtons.forEach(b => b.classList.remove('active'));
+        prepButtons[0].classList.add('active');
+        currentSelectedPrep = 'на';
+
+        shuffleGrid();
+    });
+
+    // Initialisierung beim Laden
+    window.addEventListener('DOMContentLoaded', shuffleGrid);
+</script>
+
+</body>
+</html>
