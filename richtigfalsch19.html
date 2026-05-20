@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Grammatik-Swipe</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+
+        /* Der Karten-Stapel */
+        .card-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            margin-bottom: 25px;
+            perspective: 1000px;
+        }
+
+        .swipe-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.08);
+            border: 2px solid #e2e8f0;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            cursor: grab;
+            touch-action: none; /* Verhindert das Scrollen der Seite beim Swipen */
+            transform-origin: center bottom;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
+            display: none; /* Wird via JS für die aktive Karte gesteuert */
+        }
+
+        .swipe-card.active {
+            display: flex;
+            z-index: 10;
+        }
+
+        .swipe-card.next {
+            display: flex;
+            z-index: 5;
+            transform: scale(0.95) translateY(15px);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .card-content {
+            text-align: center;
+            margin-auto: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+            flex-grow: 1;
+        }
+
+        .phrase {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .translation {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .card-footer {
+            font-size: 0.85rem;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Visuelle Indikatoren auf der Karte beim Swipen */
+        .badge {
+            position: absolute;
+            top: 20px;
+            padding: 6px 15px;
+            border-radius: 6px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            opacity: 0;
+            transform: rotate(-10deg);
+            transition: opacity 0.1s;
+        }
+
+        .badge.right-badge {
+            right: 20px;
+            border: 3px solid var(--success-color);
+            color: var(--success-color);
+            transform: rotate(15deg);
+        }
+
+        .badge.left-badge {
+            left: 20px;
+            border: 3px solid var(--error-color);
+            color: var(--error-color);
+            transform: rotate(-15deg);
+        }
+
+        /* Buttons für Desktop & Klick-Bedienung */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background-color 0.2s;
+            background: white;
+        }
+
+        .btn:active {
+            transform: scale(0.9);
+        }
+
+        .btn-wrong {
+            border: 2px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .btn-wrong:hover {
+            background-color: #fdeaea;
+        }
+
+        .btn-correct {
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .btn-correct:hover {
+            background-color: #e8f8f5;
+        }
+
+        .btn svg {
+            width: 28px;
+            height: 28px;
+            fill: currentColor;
+        }
+
+        /* Score & Feedback */
+        .score-board {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .stats-detail {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+
+        /* Endbildschirm */
+        .summary {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+            width: 100%;
+            display: none;
+        }
+
+        .summary h2 {
+            color: var(--success-color);
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .restart-btn:hover {
+            background-color: #357abd;
+        }
+
+        /* RESPONSIVE ANPASSUNGEN */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .card-container {
+                height: 340px; /* Etwas kompakter auf kleinen Handys */
+            }
+            .phrase {
+                font-size: 1.5rem;
+            }
+            .btn {
+                width: 65px;
+                height: 65px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="game-zone">
+        <h1>Верно или неверно?</h1>
+        <p class="instruction">Stimmt die Kombination? <br>📱 Wische nach rechts/links | 💻 Klicke Tasten oder nutze Pfeiltasten</p>
+        
+        <div class="score-board" id="score-display">Score: 0 / 0</div>
+
+        <div class="card-container" id="card-stack">
+            <!-- Karten werden dynamisch via JavaScript generiert -->
+        </div>
+
+        <div class="action-buttons">
+            <!-- Falsch Button (Links) -->
+            <button class="btn btn-wrong" id="btn-left" title="Falsch (Pfeiltaste links)">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+            <!-- Richtig Button (Rechts) -->
+            <button class="btn btn-correct" id="btn-right" title="Richtig (Pfeiltaste rechts)">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </button>
+        </div>
+        <div class="stats-detail" id="combo-display">Aktuelle Serie: 0 🔥</div>
+    </div>
+
+    <!-- Ergebnis-Bildschirm -->
+    <div class="summary" id="summary-zone">
+        <h2>Übung beendet!</h2>
+        <div id="final-stats" style="font-size: 1.2rem; margin-bottom: 15px;"></div>
+        <p id="evaluation-text"></p>
+        <button class="restart-btn" id="restart-btn">Nochmal spielen</button>
+    </div>
+</div>
+
+<script>
+    // Aufgabenpool (6 typische Konstruktionen mit в / на)
+    const dataset = [
+        { phrase: "билет в электричку", translation: "Fahrkarte für die S-Bahn", isValid: false, feedback: "Falsch! Richtig ist: билет на электричку (auf Züge/Transportmittel nutzt man 'на')." },
+        { phrase: "ехать на поезде", translation: "mit dem Zug fahren", isValid: true, feedback: "Richtig! Transportmittel stehen im Präpositional meist mit 'на'." },
+        { phrase: "идти на концерт", translation: "zum Konzert gehen", isValid: true, feedback: "Richtig! Veranstaltungen nutzen im Russischen die Präposition 'на'." },
+        { phrase: "встреча на театре", translation: "Treffen im Theater", isValid: false, feedback: "Falsch! Richtig ist: встреча в театре (Gebäude verlangen standardmäßig 'в')." },
+        { phrase: "билет в кино", translation: "Kinoticket", isValid: true, feedback: "Richtig! Für geschlossene Räumlichkeiten wie das Kino nutzt man 'в'." },
+        { phrase: "идти в лекцию", translation: "zur Vorlesung gehen", isValid: false, feedback: "Falsch! Richtig ist: идти на лекцию (Aktivitäten/Veranstaltungen nutzen 'на')." }
+    ];
+
+    let cards = [];
+    let currentIndex = 0;
+    let score = 0;
+    let streak = 0;
+
+    // Touch & Drag Variablen
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    const swipeThreshold = 100; // Pixel, ab denen ein Swipe gewertet wird
+
+    const cardStack = document.getElementById('card-stack');
+    const scoreDisplay = document.getElementById('score-display');
+    const comboDisplay = document.getElementById('combo-display');
+    const gameZone = document.getElementById('game-zone');
+    const summaryZone = document.getElementById('summary-zone');
+    const finalStats = document.getElementById('final-stats');
+    const evaluationText = document.getElementById('evaluation-text');
+    
+    function initGame() {
+        cardStack.innerHTML = '';
+        // Mixen der Karten
+        cards = [...dataset].sort(() => Math.random() - 0.5);
+        currentIndex = 0;
+        score = 0;
+        streak = 0;
+        
+        updateScoreboard();
+        renderCards();
+        showCurrentCard();
+    }
+
+    function renderCards() {
+        cards.forEach((data, index) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'swipe-card';
+            cardEl.setAttribute('data-index', index);
+            
+            cardEl.innerHTML = `
+                <div class="badge left-badge">Falsch</div>
+                <div class="badge right-badge">Richtig</div>
+                <div class="card-content">
+                    <div class="phrase">${data.phrase}</div>
+                    <div class="translation">${data.translation}</div>
+                </div>
+                <div class="card-footer">Karte ${index + 1} von ${cards.length}</div>
+            `;
+            
+            // Event Listener für Touch & Mouse-Dragging anhängen
+            cardEl.addEventListener('mousedown', startDrag);
+            cardEl.addEventListener('touchstart', startDrag);
+            
+            cardStack.appendChild(cardEl);
+        });
+    }
+
+    function showCurrentCard() {
+        const allCards = document.querySelectorAll('.swipe-card');
+        allCards.forEach(c => c.className = 'swipe-card'); // Reset aller Klassen
+        
+        if (currentIndex < cards.length) {
+            allCards[currentIndex].classList.add('active');
+            if (currentIndex + 1 < cards.length) {
+                allCards[currentIndex + 1].classList.add('next');
+            }
+        } else {
+            endGame();
+        }
+    }
+
+    function updateScoreboard() {
+        scoreDisplay.textContent = `Score: ${score} / ${currentIndex}`;
+        comboDisplay.textContent = `Aktuelle Serie: ${streak} 🔥`;
+    }
+
+    // Drag-Gesten Logik
+    function startDrag(e) {
+        if (isDragging) return;
+        isDragging = true;
+        
+        const activeCard = document.querySelectorAll('.swipe-card')[currentIndex];
+        activeCard.style.transition = 'none';
+        
+        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        currentX = startX;
+
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('touchmove', doDrag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+    }
+
+    function doDrag(e) {
+        if (!isDragging) return;
+        
+        currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const deltaX = currentX - startX;
+        const activeCard = document.querySelectorAll('.swipe-card')[currentIndex];
+        
+        // Drehwinkel proportional zur Bewegung berechnen
+        const rotate = deltaX * 0.05;
+        activeCard.style.transform = `translateX(${deltaX}px) rotate(${rotate}deg)`;
+
+        // Overlays (Badges) sichtbar machen
+        const rightBadge = activeCard.querySelector('.right-badge');
+        const leftBadge = activeCard.querySelector('.left-badge');
+        
+        if (deltaX > 10) {
+            rightBadge.style.opacity = Math.min(deltaX / swipeThreshold, 1);
+            leftBadge.style.opacity = 0;
+        } else if (deltaX < -10) {
+            leftBadge.style.opacity = Math.min(Math.abs(deltaX) / swipeThreshold, 1);
+            rightBadge.style.opacity = 0;
+        } else {
+            rightBadge.style.opacity = 0;
+            leftBadge.style.opacity = 0;
+        }
+    }
+
+    function endDrag() {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        document.removeEventListener('mousemove', doDrag);
+        document.removeEventListener('touchmove', doDrag);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchend', endDrag);
+
+        const deltaX = currentX - startX;
+        const activeCard = document.querySelectorAll('.swipe-card')[currentIndex];
+        
+        activeCard.style.transition = 'transform 0.3s ease, opacity 0.1s';
+
+        if (deltaX > swipeThreshold) {
+            // Nach rechts geschoben = Richtig gewählt
+            handleChoice(true, 'right');
+        } else if (deltaX < -swipeThreshold) {
+            // Nach links geschoben = Falsch gewählt
+            handleChoice(false, 'left');
+        } else {
+            // Zurücksetzen, wenn nicht weit genug gezogen
+            activeCard.style.transform = '';
+            activeCard.querySelector('.right-badge').style.opacity = 0;
+            activeCard.querySelector('.left-badge').style.opacity = 0;
+        }
+    }
+
+    // Auswertung der Antwort
+    function handleChoice(userAnswer, direction) {
+        const activeCard = document.querySelectorAll('.swipe-card')[currentIndex];
+        const cardData = cards[currentIndex];
+        
+        // Richtig oder falsch geraten?
+        const isCorrect = (cardData.isValid === userAnswer);
+        
+        if (isCorrect) {
+            score++;
+            streak++;
+        } else {
+            streak = 0;
+            // Optionales visuelles/textbasiertes Feedback für Fehler kann hier eingebaut werden
+            alert(cardData.feedback);
+        }
+
+        // Karte aus dem Bildschirm fliegen lassen
+        const flyX = direction === 'right' ? 600 : -600;
+        const rotate = direction === 'right' ? 30 : -30;
+        activeCard.style.transform = `translateX(${flyX}px) rotate(${rotate}deg)`;
+        activeCard.style.opacity = '0';
+
+        currentIndex++;
+        updateScoreboard();
+
+        setTimeout(() => {
+            showCurrentCard();
+        }, 200);
+    }
+
+    // Button-Klicks und Tastaturbedienung
+    document.getElementById('btn-left').addEventListener('click', () => {
+        if(currentIndex < cards.length) handleChoice(false, 'left');
+    });
+
+    document.getElementById('btn-right').addEventListener('click', () => {
+        if(currentIndex < cards.length) handleChoice(true, 'right');
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (gameZone.style.display === 'none') return;
+        if (e.key === 'ArrowLeft') {
+            handleChoice(false, 'left');
+        } else if (e.key === 'ArrowRight') {
+            handleChoice(true, 'right');
+        }
+    });
+
+    function endGame() {
+        gameZone.style.display = 'none';
+        summaryZone.style.display = 'block';
+        
+        finalStats.textContent = `Ergebnis: ${score} von ${cards.length} richtig beantwortet.`;
+        
+        const percentage = (score / cards.length) * 100;
+        if (percentage === 100) {
+            evaluationText.textContent = "Perfekt! Du hast ein absolutes Gespür für die Präpositionen! 🏆";
+        } else if (percentage >= 70) {
+            evaluationText.textContent = "Sehr gut! Die meisten Phrasen hast du fehlerfrei erkannt. 👍";
+        } else {
+            evaluationText.textContent = "Guter Versuch! Schau dir die Transportmittel und Orte noch einmal genau an. 📖";
+        }
+    }
+
+    document.getElementById('restart-btn').addEventListener('click', () => {
+        summaryZone.style.display = 'none';
+        gameZone.style.display = 'block';
+        initGame();
+    });
+
+    // Start beim Laden
+    window.addEventListener('DOMContentLoaded', initGame);
+</script>
+
+</body>
+</html>
