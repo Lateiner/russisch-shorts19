@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Kontext-Quiz</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* Fortschrittsanzeige */
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Frage-Bereich */
+        .question-box {
+            margin-bottom: 25px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-color);
+            line-height: 1.4;
+        }
+
+        /* Große Kacheln für die Antworten */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 25px;
+        }
+
+        .option-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 22px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+        }
+
+        @media (hover: hover) {
+            .option-card:not(.disabled):hover {
+                border-color: var(--primary-color);
+                background-color: #edf2f7;
+                transform: translateY(-2px);
+            }
+        }
+
+        /* Zustände nach Antwortabgabe */
+        .option-card.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+            color: #117a65;
+        }
+
+        .option-card.incorrect {
+            border-color: var(--error-color);
+            background-color: #fdeaea;
+            color: #b03a2e;
+        }
+
+        .option-card.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .option-card.correct.disabled, .option-card.incorrect.disabled {
+            opacity: 1; /* Gewählte/Richtige Kacheln voll sichtbar lassen */
+        }
+
+        /* Feedback-Text */
+        .feedback-box {
+            min-height: 50px;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* Button-Steuerung */
+        .controls {
+            display: flex;
+            justify-content: center;
+        }
+
+        .next-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            width: 100%;
+            max-width: 220px;
+            display: none; /* Wird erst nach Klick eingeblendet */
+        }
+
+        .next-btn:hover {
+            background-color: #357abd;
+        }
+
+        .next-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Endbildschirm */
+        .summary {
+            text-align: center;
+            display: none;
+        }
+
+        .summary h2 {
+            font-size: 1.8rem;
+            color: var(--success-color);
+            margin-bottom: 15px;
+        }
+
+        .score-text {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .restart-btn {
+            background-color: var(--reset-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .restart-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .question-text {
+                font-size: 1.15rem;
+            }
+            .option-card {
+                padding: 15px 18px;
+                font-size: 1.05rem;
+            }
+            .next-btn {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="quiz-zone">
+        <h1>Тест (Kontext-Quiz)</h1>
+        <p class="instruction">Wähle die grammatikalisch richtige Übersetzung aus!</p>
+
+        <!-- Statusleiste -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span id="progressText">Frage 1 von 5</span>
+        </div>
+
+        <!-- Frage -->
+        <div class="question-box">
+            <div class="question-text" id="questionText">Wie übersetzt man: „Eine Karte ins Theater“?</div>
+        </div>
+
+        <!-- Antwort-Kacheln -->
+        <div class="options-list" id="optionsList">
+            <!-- Wird dynamisch befüllt -->
+        </div>
+
+        <!-- Feedback & Button -->
+        <div class="feedback-box" id="feedbackBox"></div>
+        <div class="controls">
+            <button class="next-btn" id="nextBtn">Nächste Frage</button>
+        </div>
+    </div>
+
+    <!-- Auswertungs-Screen -->
+    <div class="summary" id="summaryZone">
+        <h2>Übung abgeschlossen!</h2>
+        <div class="score-text" id="scoreText">Du hast 0 von 5 Fragen richtig gelöst.</div>
+        <p id="evaluationText" style="color: #7f8c8d; margin-bottom: 25px;"></p>
+        <button class="restart-btn" id="restartBtn">Quiz neustarten</button>
+    </div>
+</div>
+
+<script>
+    // Fragenkatalog mit Fokus auf die Präpositionen в und на
+    const quizData = [
+        {
+            question: "Wie übersetzt man: „Eine Karte ins Theater“?",
+            options: ["билет на театр", "билет в театр", "билет на театре"],
+            correct: 1,
+            explanation: "Richtig! Für geschlossene Kulturgebäude nutzt man im Akkusativ (Wohin?) die Präposition 'в'."
+        },
+        {
+            question: "Wie übersetzt man: „Ich fahre mit der S-Bahn“?",
+            options: ["Я еду в электричке", "Я еду на электричку", "Я еду на электричке"],
+            correct: 2,
+            explanation: "Richtig! Transportmittel verlangen im Präpositional (Womit/Worauf?) die Kombination 'на' + Lokativ."
+        },
+        {
+            question: "Wie übersetzt man: „Sie gehen zur Vorlesung“?",
+            options: ["Они идут на лекцию", "Они идут в лекцию", "Они идут на лекции"],
+            correct: 0,
+            explanation: "Richtig! Veranstaltungen, Events und akademische Aktivitäten nutzen im Russischen immer 'на'."
+        },
+        {
+            question: "Wie übersetzt man: „Ein Ticket für das Flugzeug nach Russland“?",
+            options: ["билет в самолет на Россию", "билет на самолет в Россию", "билет на самолете в России"],
+            correct: 1,
+            explanation: "Richtig! Ein Ticket *für* ein Verkehrsmittel ist 'билет на', und die Richtung in ein Land ist 'в'."
+        },
+        {
+            question: "Wie übersetzt man: „Wir sind im Kino“?",
+            options: ["Мы в кино", "Мы на кино", "Мы в киноме"],
+            correct: 0,
+            explanation: "Richtig! Ortsangabe (Wo?) für Gebäude ist 'в'. Das Wort 'кино' ist zudem unveränderlich."
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const quizZone = document.getElementById('quiz-zone');
+    const summaryZone = document.getElementById('summaryZone');
+    const questionText = document.getElementById('questionText');
+    const optionsList = document.getElementById('optionsList');
+    const feedbackBox = document.getElementById('feedbackBox');
+    const nextBtn = document.getElementById('nextBtn');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const scoreText = document.getElementById('scoreText');
+    const evaluationText = document.getElementById('evaluationText');
+    const restartBtn = document.getElementById('restartBtn');
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        quizZone.style.display = 'block';
+        summaryZone.style.display = 'none';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        feedbackBox.textContent = '';
+        nextBtn.style.display = 'none';
+        
+        const currentQuiz = quizData[currentQuestionIndex];
+        
+        // Progress-Anzeige updaten
+        const totalQuestions = quizData.length;
+        const progressPercent = ((currentQuestionIndex) / totalQuestions) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `Frage ${currentQuestionIndex + 1} von ${totalQuestions}`;
+
+        // Frage setzen
+        questionText.textContent = currentQuiz.question;
+
+        // Antwortkacheln aufbauen
+        optionsList.innerHTML = '';
+        currentQuiz.options.forEach((option, index) => {
+            const card = document.createElement('div');
+            card.className = 'option-card';
+            card.textContent = option;
+            card.addEventListener('click', () => selectOption(index, card));
+            optionsList.appendChild(card);
+        });
+    }
+
+    function selectOption(selectedIndex, selectedCard) {
+        const currentQuiz = quizData[currentQuestionIndex];
+        const allCards = optionsList.children;
+
+        // Alle Kacheln für weitere Klicks sperren
+        Array.from(allCards).forEach(card => card.classList.add('disabled'));
+
+        if (selectedIndex === currentQuiz.correct) {
+            // Richtig geantwortet
+            selectedCard.classList.add('correct');
+            feedbackBox.style.color = "var(--success-color)";
+            feedbackBox.innerHTML = `✓ <strong>Richtig!</strong> ${currentQuiz.explanation}`;
+            score++;
+        } else {
+            // Falsch geantwortet
+            selectedCard.classList.add('incorrect');
+            // Richtige Antwort zusätzlich markieren
+            allCards[currentQuiz.correct].classList.add('correct');
+            feedbackBox.style.color = "var(--error-color)";
+            feedbackBox.innerHTML = `✗ <strong>Nicht ganz korrekt.</strong> ${currentQuiz.explanation}`;
+        }
+
+        nextBtn.style.display = 'block';
+    }
+
+    nextBtn.addEventListener('click', () => {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showSummary();
+        }
+    });
+
+    function showSummary() {
+        // Finalen Balken füllen
+        progressFill.style.width = '100%';
+        
+        quizZone.style.display = 'none';
+        summaryZone.style.display = 'block';
+        
+        scoreText.textContent = `Du hast ${score} von ${quizData.length} Fragen richtig gelöst.`;
+        
+        // Individuelle Belobigung
+        const percentage = (score / quizData.length) * 100;
+        if (percentage === 100) {
+            evaluationText.textContent = "Hervorragend! Du beherrschst die Präpositionen в und на im Kontext fehlerfrei! 🏆";
+        } else if (percentage >= 60) {
+            evaluationText.textContent = "Gute Leistung! Die wichtigsten Grundlagen sitzen bereits sicher. 👍";
+        } else {
+            evaluationText.textContent = "Nutze den Neustart, um dich bei den kniffligen Ausnahmen noch etwas zu festigen. 📖";
+        }
+    }
+
+    restartBtn.addEventListener('click', startQuiz);
+
+    // Initialer Start beim Laden der Seite
+    window.addEventListener('DOMContentLoaded', startQuiz);
+</script>
+
+</body>
+</html>
