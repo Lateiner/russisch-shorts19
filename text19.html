@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Lückenbefüllung (Deutsch)</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* Status & Fortschritt */
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 3px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Aufgaben-Box */
+        .exercise-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .russian-phrase {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Die deutsche Lücke */
+        .german-sentence {
+            font-size: 1.25rem;
+            color: #34495e;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            line-height: 2;
+        }
+
+        .gap-input {
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 4px 12px;
+            border: 2px solid #cbd5e0;
+            border-radius: 6px;
+            width: 150px;
+            text-align: center;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .gap-input:focus {
+            border-color: var(--primary-color);
+            background-color: #fff;
+        }
+
+        /* Visuelle Rückmeldungen am Eingabefeld */
+        .gap-input.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+            color: #117a65;
+        }
+
+        .gap-input.incorrect {
+            border-color: var(--error-color);
+            background-color: #fdeaea;
+            color: #b03a2e;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Feedback-Meldung */
+        .feedback-message {
+            text-align: center;
+            min-height: 24px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons */
+        .controls {
+            display: flex;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .action-btn:hover {
+            background-color: #357abd;
+        }
+
+        /* Endbildschirm */
+        .summary {
+            text-align: center;
+            display: none;
+        }
+
+        .summary h2 {
+            font-size: 1.8rem;
+            color: var(--success-color);
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background-color: var(--reset-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+
+        .restart-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .russian-phrase {
+                font-size: 1.4rem;
+            }
+            .german-sentence {
+                font-size: 1.1rem;
+            }
+            .gap-input {
+                width: 130px;
+                font-size: 1.05rem;
+            }
+            .action-btn {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="exercise-zone">
+        <h1>Перевод (Übersetzung)</h1>
+        <p class="instruction">Lies den russischen Satz und tippe das fehlende deutsche Wort in die Lücke ein!</p>
+
+        <!-- Fortschritt -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span id="progressText">Satz 1 von 5</span>
+        </div>
+
+        <!-- Karte -->
+        <div class="exercise-box">
+            <div class="russian-phrase" id="russianPhrase">билет на поезд</div>
+            <div class="german-sentence" id="germanSentence">
+                <!-- Wird dynamisch durch JS befüllt -->
+            </div>
+        </div>
+
+        <!-- Feedback & Bestätigung -->
+        <div class="feedback-message" id="feedbackMessage"></div>
+        <div class="controls">
+            <button class="action-btn" id="actionBtn">Prüfen</button>
+        </div>
+    </div>
+
+    <!-- Ergebnis -->
+    <div class="summary" id="summaryZone">
+        <h2>Klasse gemacht!</h2>
+        <p id="finalScoreText" style="font-size: 1.2rem; font-weight: 600; margin-bottom: 15px;"></p>
+        <p style="color: #7f8c8d; margin-bottom: 25px;">Du hast erfolgreich gelernt, wie die russischen Präpositionen im Deutschen übersetzt werden.</p>
+        <button class="restart-btn" id="restartBtn">Nochmal starten</button>
+    </div>
+</div>
+
+<script>
+    // Satzpool mit flexiblen Antwortmöglichkeiten für U-Bahn / Metro
+    const dataset = [
+        {
+            russian: "билет на поезд",
+            beforeText: "ein Ticket für den",
+            afterText: "",
+            answers: ["zug"], 
+            displayAnswer: "Zug"
+        },
+        {
+            russian: "билет в кино",
+            beforeText: "eine Karte ins",
+            afterText: "",
+            answers: ["kino"],
+            displayAnswer: "Kino"
+        },
+        {
+            russian: "ехать на метро",
+            beforeText: "mit der",
+            afterText: "fahren",
+            // Jetzt flexibel: Erlaubt U-Bahn (mit/ohne Bindestrich) sowie Metro
+            answers: ["u-bahn", "ubahn", "metro"], 
+            displayAnswer: "U-Bahn / Metro"
+        },
+        {
+            russian: "идти на лекцию",
+            beforeText: "zur",
+            afterText: "gehen",
+            answers: ["vorlesung"],
+            displayAnswer: "Vorlesung"
+        },
+        {
+            russian: "встреча в театре",
+            beforeText: "Treffen im",
+            afterText: "",
+            answers: ["theater"],
+            displayAnswer: "Theater"
+        }
+    ];
+
+    let currentIndex = 0;
+    let isEvaluated = false;
+
+    const exerciseZone = document.getElementById('exercise-zone');
+    const summaryZone = document.getElementById('summaryZone');
+    const russianPhrase = document.getElementById('russianPhrase');
+    const germanSentence = document.getElementById('germanSentence');
+    const feedbackMessage = document.getElementById('feedbackMessage');
+    const actionBtn = document.getElementById('actionBtn');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const finalScoreText = document.getElementById('finalScoreText');
+    const restartBtn = document.getElementById('restartBtn');
+
+    function startExercise() {
+        currentIndex = 0;
+        exerciseZone.style.display = 'block';
+        summaryZone.style.display = 'none';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        isEvaluated = false;
+        feedbackMessage.textContent = '';
+        actionBtn.textContent = 'Prüfen';
+        
+        const currentData = dataset[currentIndex];
+        
+        const total = dataset.length;
+        progressFill.style.width = `${(currentIndex / total) * 100}%`;
+        progressText.textContent = `Satz ${currentIndex + 1} von ${total}`;
+
+        russianPhrase.textContent = currentData.russian;
+
+        germanSentence.innerHTML = '';
+        if (currentData.beforeText) {
+            germanSentence.appendChild(document.createTextNode(currentData.beforeText + ' '));
+        }
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'gap-input';
+        input.id = 'gapInput';
+        input.placeholder = '...';
+        input.autocomplete = 'off';
+        input.autocorrect = 'off';
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                actionBtn.click();
+            }
+        });
+
+        germanSentence.appendChild(input);
+
+        if (currentData.afterText) {
+            germanSentence.appendChild(document.createTextNode(' ' + currentData.afterText));
+        }
+
+        setTimeout(() => input.focus(), 50);
+    }
+
+    actionBtn.addEventListener('click', () => {
+        const inputField = document.getElementById('gapInput');
+        if (!inputField) return;
+
+        const currentData = dataset[currentIndex];
+
+        if (!isEvaluated) {
+            const userInput = inputField.value.trim().toLowerCase();
+
+            if (userInput === '') {
+                feedbackMessage.style.color = 'orange';
+                feedbackMessage.textContent = 'Bitte tippe zuerst eine Antwort ein!';
+                return;
+            }
+
+            if (currentData.answers.includes(userInput)) {
+                inputField.classList.remove('incorrect');
+                inputField.classList.add('correct');
+                inputField.disabled = true;
+                feedbackMessage.style.color = 'var(--success-color)';
+                feedbackMessage.textContent = 'Richtig! Gut gemacht.';
+                
+                actionBtn.textContent = 'Weiter';
+                isEvaluated = true;
+            } else {
+                inputField.classList.remove('incorrect');
+                void inputField.offsetWidth; 
+                inputField.classList.add('incorrect');
+                
+                feedbackMessage.style.color = 'var(--error-color)';
+                feedbackMessage.textContent = `Nicht ganz. Richtig wäre: "${currentData.displayAnswer}"`;
+                
+                actionBtn.textContent = 'Weiter';
+                isEvaluated = true;
+            }
+        } else {
+            currentIndex++;
+            if (currentIndex < dataset.length) {
+                loadQuestion();
+            } else {
+                showSummary();
+            }
+        }
+    });
+
+    function showSummary() {
+        progressFill.style.width = '100%';
+        exerciseZone.style.display = 'none';
+        summaryZone.style.display = 'block';
+        finalScoreText.textContent = `Du hast alle ${dataset.length} Sätze erfolgreich bearbeitet!`;
+    }
+
+    restartBtn.addEventListener('click', startExercise);
+    window.addEventListener('DOMContentLoaded', startExercise);
+</script>
+
+</body>
+</html>
