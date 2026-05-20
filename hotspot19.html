@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Übung: Interaktive Hotspot-Karte</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --reset-color: #95a5a6;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        p.instruction {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        /* Status & Counter */
+        .status-bar {
+            text-align: center;
+            font-weight: bold;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        /* Das interaktive SVG-Szenario */
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            background: #e0f2fe;
+            border-radius: 8px;
+            border: 2px solid #cbd5e0;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Hotspot-Styling via SVG-Klassen */
+        .hotspot {
+            cursor: pointer;
+            fill: transparent;
+            stroke: rgba(74, 144, 226, 0.4);
+            stroke-width: 2;
+            stroke-dasharray: 6 4;
+            transition: all 0.3s ease;
+        }
+
+        .hotspot:hover {
+            fill: rgba(74, 144, 226, 0.15);
+            stroke: var(--primary-color);
+            stroke-width: 3;
+        }
+
+        .hotspot.solved {
+            pointer-events: none;
+            stroke: var(--success-color);
+            fill: rgba(46, 204, 113, 0.1);
+        }
+
+        /* Frage-Modal / Overlay unter der Karte */
+        .quiz-overlay {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            display: none; /* Erscheint erst bei Klick */
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        /* Kacheln für Optionen */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .option-tile {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        @media (hover: hover) {
+            .option-tile:not(.disabled):hover {
+                border-color: var(--primary-color);
+                background-color: #f0f7ff;
+                transform: translateY(-2px);
+            }
+        }
+
+        .option-tile.correct {
+            border-color: var(--success-color);
+            background-color: #e8f8f5;
+            color: #117a65;
+        }
+
+        .option-tile.incorrect {
+            border-color: var(--error-color);
+            background-color: #fdeaea;
+            color: #b03a2e;
+        }
+
+        .option-tile.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .option-tile.correct.disabled, .option-tile.incorrect.disabled {
+            opacity: 1;
+        }
+
+        .feedback-text {
+            text-align: center;
+            font-weight: 600;
+            min-height: 24px;
+        }
+
+        /* Endbildschirm */
+        .summary {
+            text-align: center;
+            display: none;
+            padding: 30px 10px;
+        }
+
+        .summary h2 {
+            color: var(--success-color);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .restart-btn {
+            background-color: var(--reset-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .restart-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+            .options-grid {
+                grid-template-columns: 1fr; /* Kacheln stapeln sich auf Smartphones vertikal */
+            }
+            .option-tile {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="game-zone">
+        <h1>Карта города (Interaktive Stadtkarte)</h1>
+        <p class="instruction">Klicke auf die blinkenden Symbole in der Stadt, um die Aufgaben zu öffnen!</p>
+
+        <div class="status-bar" id="statusBar">Gefundene Stationen: 0 / 3</div>
+
+        <!-- Responsive Vektorkarte -->
+        <div class="map-wrapper">
+            <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Hintergrund & Landschaft (Himmel vorhanden durch wrapper) -->
+                <rect x="0" y="280" width="800" height="120" fill="#94a3b8" /> <!-- Straße/Boden -->
+                <path d="M 0 280 Q 200 220 400 280 T 800 280 L 800 280 L 0 280 Z" fill="#dde1e8" /> <!-- Hügel -->
+
+                <!-- STATION 1: Flughafen (Links) -->
+                <g transform="translate(40, 130)">
+                    <!-- Tower & Gebäude -->
+                    <rect x="20" y="50" width="100" height="100" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>
+                    <rect x="55" y="0" width="30" height="60" fill="#94a3b8" stroke="#64748b" stroke-width="2"/>
+                    <ellipse cx="70" cy="0" rx="25" ry="15" fill="#38bdf8" stroke="#0284c7" stroke-width="2" />
+                    <!-- Flugzeug-Symbol -->
+                    <path d="M 40 100 L 100 80 L 90 75 L 45 90 Z" fill="#f8fafc" />
+                    <path d="M 60 90 L 75 60 L 80 62 L 68 87 Z" fill="#64748b" />
+                    <text x="35" y="130" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1e293b">Аэропорт</text>
+                </g>
+                <!-- Hotspot Flughafen -->
+                <rect id="spot-airport" class="hotspot" x="50" y="110" width="140" height="160" rx="10" />
+
+                <!-- STATION 2: Museum (Mitte) -->
+                <g transform="translate(330, 140)">
+                    <!-- Antikes Museumsgebäude -->
+                    <rect x="0" y="40" width="140" height="100" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+                    <polygon points="70,0 -10,40 150,40" fill="#eab308" stroke="#ca8a04" stroke-width="2" />
+                    <!-- Säulen -->
+                    <rect x="15" y="50" width="15" height="90" fill="#fef9c3" stroke="#ca8a04" />
+                    <rect x="50" y="50" width="15" height="90" fill="#fef9c3" stroke="#ca8a04" />
+                    <rect x="85" y="50" width="15" height="90" fill="#fef9c3" stroke="#ca8a04" />
+                    <rect x="110" y="50" width="15" height="90" fill="#fef9c3" stroke="#ca8a04" />
+                    <text x="38" y="30" font-family="sans-serif" font-size="14" font-weight="bold" fill="#854d0e">Музей</text>
+                </g>
+                <!-- Hotspot Museum -->
+                <rect id="spot-museum" class="hotspot" x="310" y="130" width="180" height="140" rx="10" />
+
+                <!-- STATION 3: Bahnhof & Zug (Rechts) -->
+                <g transform="translate(580, 160)">
+                    <!-- Bahnhofsgebäude -->
+                    <rect x="0" y="20" width="160" height="100" fill="#fca5a5" stroke="#dc2626" stroke-width="2"/>
+                    <circle cx="80" cy="50" r="15" fill="#f8fafc" stroke="#dc2626" stroke-width="2"/> <!-- Uhr -->
+                    <!-- Lokomotive / Zug davor -->
+                    <rect x="-30" y="90" width="80" height="30" fill="#1e3a8a" rx="5"/>
+                    <circle cx="-10" cy="120" r="8" fill="#334155"/>
+                    <circle cx="30" cy="120" r="8" fill="#334155"/>
+                    <text x="50" y="10" font-family="sans-serif" font-size="14" font-weight="bold" fill="#7f1d1d">Вокзал</text>
+                </g>
+                <!-- Hotspot Bahnhof -->
+                <rect id="spot-station" class="hotspot" x="540" y="150" width="220" height="120" rx="10" />
+            </svg>
+        </div>
+
+        <!-- Dynamisches Frage-Panel -->
+        <div class="quiz-overlay" id="quizOverlay">
+            <div class="question-text" id="questionText">Frage lädt...</div>
+            <div class="options-grid" id="optionsGrid"></div>
+            <div class="feedback-text" id="feedbackText"></div>
+        </div>
+    </div>
+
+    <!-- Endbildschirm -->
+    <div class="summary" id="summaryZone">
+        <h2>Hervorragend gelöst! 🏁</h2>
+        <p style="font-size: 1.2rem; font-weight: 500;">Du hast alle Orientierungspunkte in der Stadt untersucht und die korrekten Präpositionen im Kontext zugeordnet.</p>
+        <button class="restart-btn" id="restartBtn">Erneut spielen</button>
+    </div>
+</div>
+
+<script>
+    // Konfiguration der Aufgaben pro Hotspot
+    const stationData = {
+        "spot-airport": {
+            title: "Flughafen (самолет)",
+            question: "Ergänze den Ausdruck: „Ich habe ein Ticket für das Flugzeug gekauft.“ -> Я купил билет ___ самолет.",
+            options: ["в", "на", "вместе"],
+            correctIndex: 1,
+            explanation: "Richtig! Für Transportmittel nutzt man im Regelfall die Wendung 'билет на' + Akkusativ."
+        },
+        "spot-museum": {
+            title: "Museum (музей)",
+            question: "Ergänze den Ausdruck: „Wo kauft man eine Karte ins Museum?“ -> Где купить билет ___ музей?",
+            options: ["на", "в", "к"],
+            correctIndex: 1,
+            explanation: "Richtig! Für geschlossene öffentliche Gebäude verwenden wir die Richtungspräposition 'в'."
+        },
+        "spot-station": {
+            title: "Bahnhof / Zug (поезд)",
+            question: "Ergänze den Ausdruck: „Wir fahren mit dem Zug.“ -> Мы едем ___ поезде.",
+            options: ["в", "на", "надежда"],
+            correctIndex: 1,
+            explanation: "Richtig! Bei Reisen mit mechanischen Verkehrsmitteln stehen im Lokativ (Wo/Womit?) die Präposition 'на'."
+        }
+    };
+
+    let solvedStations = [];
+    let activeStationId = null;
+
+    const statusBar = document.getElementById('statusBar');
+    const quizOverlay = document.getElementById('quizOverlay');
+    const questionText = document.getElementById('questionText');
+    const optionsGrid = document.getElementById('optionsGrid');
+    const feedbackText = document.getElementById('feedbackText');
+    const gameZone = document.getElementById('game-zone');
+    const summaryZone = document.getElementById('summaryZone');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // Event-Listener an die Hotspots binden
+    const hotspots = ['spot-airport', 'spot-museum', 'spot-station'];
+    hotspots.forEach(id => {
+        const element = document.getElementById(id);
+        if(element) {
+            element.addEventListener('click', () => openStation(id));
+        }
+    });
+
+    function openStation(id) {
+        if (solvedStations.includes(id)) return;
+        
+        activeStationId = id;
+        const data = stationData[id];
+
+        // Panel sichtbar machen und scrollen
+        quizOverlay.style.display = 'block';
+        feedbackText.textContent = '';
+        questionText.textContent = data.question;
+
+        // Optionen aufbauen
+        optionsGrid.innerHTML = '';
+        data.options.forEach((option, index) => {
+            const tile = document.createElement('div');
+            tile.className = 'option-tile';
+            tile.textContent = option;
+            tile.addEventListener('click', () => checkAnswer(index, tile));
+            optionsGrid.appendChild(tile);
+        });
+
+        // Soft-Scroll zum Frage-Bereich auf Mobilgeräten
+        quizOverlay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function checkAnswer(selectedIndex, selectedTile) {
+        const data = stationData[activeStationId];
+        const allTiles = optionsGrid.children;
+
+        // Klicks auf Kacheln sperren
+        Array.from(allTiles).forEach(tile => tile.classList.add('disabled'));
+
+        if (selectedIndex === data.correctIndex) {
+            selectedTile.classList.add('correct');
+            feedbackText.style.color = 'var(--success-color)';
+            feedbackText.innerHTML = `✓ <strong>Sehr gut!</strong> ${data.explanation}`;
+
+            // Hotspot visuell als gelöst markieren
+            document.getElementById(activeStationId).classList.add('solved');
+            
+            if (!solvedStations.includes(activeStationId)) {
+                solvedStations.push(activeStationId);
+            }
+            
+            statusBar.textContent = `Gefundene Stationen: ${solvedStations.length} / 3`;
+
+            // Nach kurzer Verzögerung das Panel schließen oder Spiel beenden
+            setTimeout(() => {
+                quizOverlay.style.display = 'none';
+                checkGameEnd();
+            }, 2500);
+
+        } else {
+            selectedTile.classList.add('incorrect');
+            allTiles[data.correctIndex].classList.add('correct');
+            feedbackText.style.color = 'var(--error-color)';
+            feedbackText.innerHTML = `✗ <strong>Falsche Präposition.</strong> Versuche es noch einmal!`;
+
+            // Nach kurzer Zeit Kacheln wieder freigeben zum erneuten Versuch
+            setTimeout(() => {
+                Array.from(allTiles).forEach(tile => {
+                    tile.classList.remove('disabled', 'incorrect', 'correct');
+                });
+                feedbackText.textContent = '';
+            }, 2500);
+        }
+    }
+
+    function checkGameEnd() {
+        if (solvedStations.length === 3) {
+            gameZone.style.display = 'none';
+            summaryZone.style.display = 'block';
+        }
+    }
+
+    restartBtn.addEventListener('click', () => {
+        solvedStations = [];
+        statusBar.textContent = `Gefundene Stationen: 0 / 3`;
+        
+        hotspots.forEach(id => {
+            document.getElementById(id).classList.remove('solved');
+        });
+
+        gameZone.style.display = 'block';
+        summaryZone.style.display = 'none';
+        quizOverlay.style.display = 'none';
+    });
+</script>
+
+</body>
+</html>
